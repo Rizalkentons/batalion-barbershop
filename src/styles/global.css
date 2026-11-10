@@ -69,7 +69,6 @@
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
   }
 
-  .container { width: min(calc(100% - 48px), var(--container)); margin-inline: auto; }
   .section { padding: 140px 0; }
   h1, h2, h3 { font-family: var(--font-display); font-weight: 600; line-height: 0.92; text-transform: uppercase; }
   h2 { max-width: 880px; font-size: clamp(3.4rem, 7vw, 7rem); letter-spacing: -0.045em; }
@@ -204,6 +203,11 @@
 }
 
 @layer sections {
+  /* Lives in this layer, not in `base`: Tailwind ships its own `.container` utility (fixed widths
+     of 640/768/1024/1280/1536px), and utilities outrank `base`. That utility was winning, which
+     left the content flush against the screen edge at exactly those widths. */
+  .container { width: min(calc(100% - 48px), var(--container)); max-width: none; margin-inline: auto; }
+
   .site-header {
     position: fixed;
     z-index: 1000;
@@ -250,7 +254,8 @@
   .hero-rail { position: absolute; z-index: 3; right: 22px; bottom: 76px; display: flex; align-items: center; gap: 20px; color: rgba(255,255,255,.66); font-size: .58rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; writing-mode: vertical-rl; }
   .rail-dot { width: 4px; height: 4px; border-radius: 999px; background: var(--yellow); }
 
-  .about { background: var(--white); color: var(--black); }
+  /* overflow-x: clip keeps the spinning stamp's rotating corners from widening the page. */
+  .about { overflow-x: clip; background: var(--white); color: var(--black); }
   .about-grid { display: grid; grid-template-columns: .85fr 1.15fr; align-items: center; gap: 100px; }
   .section-copy h2 { font-size: clamp(3.5rem, 6.2vw, 6.6rem); }
   .section-copy .lead { margin-top: 44px; font-size: clamp(1.15rem, 2vw, 1.55rem); font-weight: 600; line-height: 1.5; }
@@ -375,10 +380,12 @@
 }
 
 @layer responsive {
+  @media (max-width: 1320px) {
+    /* Side margins are 24px here; keep the stamp and its glow ring inside them. */
+    .quality-stamp { right: -12px; }
+  }
+
   @media (max-width: 1023px) {
-    /* Six nav items need the room the header's Booking button takes. Booking stays one tap away
-       through the floating WhatsApp button. */
-    .header-react-cta { display: none; }
     .gallery-grid { grid-auto-rows: clamp(200px, 30vw, 250px); grid-template-columns: repeat(3, 1fr); }
     .gallery-item.gallery-tall { grid-row: span 1; }
   }
@@ -393,7 +400,7 @@
     .main-nav { position: fixed; top: 0; right: 0; display: flex; width: min(80vw, 430px); height: 100vh; flex-direction: column; justify-content: center; gap: 28px; padding: 50px; background: #0b0b0b; transform: translateX(102%); transition: transform .3s ease; }
     .main-nav.is-open { transform: translateX(0); }
     .main-nav a { font-family: var(--font-display); font-size: 2.4rem; font-weight: 500; }
-    .header-cta { display: none; }
+    .header-cta, .header-react-cta { display: none; }
     .hero h1 { font-size: clamp(5rem, 16vw, 9rem); }
     .hero-bottom { align-items: flex-start; }
     .hero-rail { display: none; }
