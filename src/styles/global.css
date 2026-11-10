@@ -211,9 +211,21 @@
     right: 0;
     left: 0;
     border-bottom: 1px solid transparent;
-    transition: background-color 0.25s ease, border-color 0.25s ease, backdrop-filter 0.25s ease;
+    transition: border-color 0.25s ease;
   }
-  .site-header.is-scrolled { border-color: var(--line); background: rgba(9, 9, 9, 0.85); backdrop-filter: blur(16px); }
+  /* The frosted backdrop lives on a pseudo-element, not on the header itself: an element with
+     backdrop-filter becomes the containing block of its position:fixed descendants, which
+     pulled the bottom navbar up into the header on phones as soon as the page was scrolled. */
+  .site-header::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    content: '';
+    pointer-events: none;
+    transition: background-color 0.25s ease, backdrop-filter 0.25s ease;
+  }
+  .site-header.is-scrolled { border-color: var(--line); }
+  .site-header.is-scrolled::before { background: rgba(9, 9, 9, 0.85); backdrop-filter: blur(16px); }
   .header-inner { display: flex; min-height: 88px; align-items: center; justify-content: space-between; }
   .main-nav { display: flex; gap: 34px; }
   .main-nav a { position: relative; color: #d6d4cc; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
@@ -295,7 +307,8 @@
   .service-card.featured > a { border-color: rgba(0,0,0,.25); }
 
   .gallery { background: var(--black-soft); }
-  .gallery-grid { display: grid; grid-auto-rows: 330px; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  /* Two rows: a tall photo at each end, four smaller ones between them. The whole set fits in one screen. */
+  .gallery-grid { display: grid; grid-auto-rows: clamp(196px, 20vw, 250px); grid-template-columns: repeat(4, 1fr); gap: 14px; }
   .gallery-item { position: relative; padding: 0; overflow: hidden; color: var(--white); border: 0; background: var(--surface); cursor: zoom-in; }
   .gallery-item.gallery-tall { grid-row: span 2; }
   .gallery-item img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.72); transition: filter .5s ease, transform .7s ease; }
@@ -335,10 +348,12 @@
   .map-wrap iframe { width: 100%; height: 100%; border: 0; filter: grayscale(1) invert(.92) contrast(.85); }
   .map-corner { position: absolute; right: 0; bottom: 0; padding: 17px 22px; color: var(--black); background: var(--yellow); font-size: .59rem; font-weight: 800; letter-spacing: .1em; }
 
-  .final-cta { position: relative; display: grid; min-height: 720px; place-items: center; overflow: hidden; text-align: center; }
+  /* The photo is portrait and the banner is wide, so only a horizontal band of it shows. Growing the
+     banner a little on very wide screens keeps the capsters' heads inside that band. */
+  .final-cta { position: relative; display: grid; min-height: clamp(720px, 44vw, 860px); place-items: center; overflow: hidden; text-align: center; }
   .final-cta-bg, .final-cta-overlay { position: absolute; inset: 0; }
-  .final-cta-bg img { width: 100%; height: 100%; object-fit: cover; object-position: center 30%; filter: grayscale(.15); }
-  .final-cta-overlay { background: rgba(0,0,0,.75); }
+  .final-cta-bg img { width: 100%; height: 100%; object-fit: cover; object-position: center 54%; filter: grayscale(.55) contrast(1.06); }
+  .final-cta-overlay { background: radial-gradient(ellipse at center, rgba(0,0,0,.74) 0%, rgba(0,0,0,.6) 70%), linear-gradient(0deg, rgba(0,0,0,.55) 0%, transparent 40%); }
   .final-cta-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
   .final-cta h2 { max-width: 1000px; }
   .final-cta .button { margin-top: 48px; }
@@ -360,6 +375,14 @@
 }
 
 @layer responsive {
+  @media (max-width: 1023px) {
+    /* Six nav items need the room the header's Booking button takes. Booking stays one tap away
+       through the floating WhatsApp button. */
+    .header-react-cta { display: none; }
+    .gallery-grid { grid-auto-rows: clamp(200px, 30vw, 250px); grid-template-columns: repeat(3, 1fr); }
+    .gallery-item.gallery-tall { grid-row: span 1; }
+  }
+
   @media (max-width: 980px) {
     .section { padding: 100px 0; }
     .header-inner { grid-template-columns: 1fr auto; }
@@ -370,7 +393,7 @@
     .main-nav { position: fixed; top: 0; right: 0; display: flex; width: min(80vw, 430px); height: 100vh; flex-direction: column; justify-content: center; gap: 28px; padding: 50px; background: #0b0b0b; transform: translateX(102%); transition: transform .3s ease; }
     .main-nav.is-open { transform: translateX(0); }
     .main-nav a { font-family: var(--font-display); font-size: 2.4rem; font-weight: 500; }
-    .header-cta, .header-react-cta { display: none; }
+    .header-cta { display: none; }
     .hero h1 { font-size: clamp(5rem, 16vw, 9rem); }
     .hero-bottom { align-items: flex-start; }
     .hero-rail { display: none; }
@@ -379,7 +402,6 @@
     .service-grid { grid-template-columns: 1fr; }
     .service-card { min-height: 500px; border-right: 0; border-bottom: 1px solid var(--line); }
     .service-card:last-child { border-bottom: 0; }
-    .gallery-grid { grid-auto-rows: 280px; grid-template-columns: repeat(2, 1fr); }
     .location-grid { grid-template-columns: 1fr; }
     .map-wrap { min-height: 480px; }
   }
@@ -407,8 +429,9 @@
     .quality-stamp strong { font-size: 2.3rem; }
     .service-card { min-height: 520px; padding: 28px; }
     .service-card > a { right: 28px; bottom: 28px; left: 28px; }
-    .gallery-grid { grid-auto-rows: 230px; gap: 7px; }
-    .gallery-item.gallery-tall { grid-row: span 1; }
+    .gallery-grid { grid-auto-rows: clamp(140px, 46vw, 250px); grid-template-columns: repeat(2, 1fr); gap: 7px; }
+    .gallery-index { bottom: 12px; left: 12px; }
+    .gallery-open { right: 10px; bottom: 10px; width: 30px; height: 30px; }
     .experience { min-height: 720px; }
     .experience-points { grid-template-columns: 1fr; }
     .experience-points div { padding: 16px 0; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.2); }
@@ -426,8 +449,6 @@
 
   @media (max-width: 420px) {
     .hero h1 { font-size: 4.5rem; }
-    .gallery-grid { grid-template-columns: 1fr; }
-    .gallery-item { min-height: 330px; }
     .footer-grid { grid-template-columns: 1fr; }
     .footer-grid > div:first-child { grid-column: auto; }
   }

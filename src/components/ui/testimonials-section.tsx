@@ -50,7 +50,7 @@ const thirdColumn = testimonials.slice(4, 5);
 
 function TestimonialsSection({ googleMapsUrl }: TestimonialsSectionProps) {
   return (
-    <section className="relative overflow-hidden bg-[#0c0c0c] py-24 text-white md:py-32" aria-labelledby="testimonials-title">
+    <section id="testimonials" className="relative overflow-hidden bg-[#0c0c0c] py-24 text-white md:py-32" aria-labelledby="testimonials-title">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute left-1/2 top-0 h-96 w-[50rem] -translate-x-1/2 rounded-full bg-primary/8 blur-[130px]"
@@ -100,7 +100,7 @@ function TestimonialsSection({ googleMapsUrl }: TestimonialsSectionProps) {
         </div>
 
         <p className="mt-8 text-center text-[10px] uppercase tracking-[0.12em] text-white/38">
-          Kutipan dari ulasan publik Google Maps · Teks diringkas tanpa mengubah makna
+          Kutipan dari ulasan publik Google Maps
         </p>
       </div>
     </section>

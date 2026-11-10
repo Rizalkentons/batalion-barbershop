@@ -3,6 +3,7 @@ import { Image, getImage } from 'astro:assets';
 import { Hero } from '@/components/ui/animated-hero';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button';
 import { ServiceCards } from '@/components/ui/service-cards';
+import { SiteCursor } from '@/components/ui/site-cursor';
 import { SiteNavbar } from '@/components/ui/site-navbar';
 import { TreatmentReceipt } from '@/components/ui/treatment-receipt';
 import { TestimonialsSection } from '@/components/ui/testimonials-section';
@@ -62,14 +63,23 @@ const treatments = [
   { name: 'Down Perm', price: '100K' },
 ];
 
+// `position` is the CSS object-position that keeps the subject in frame when a tile crops the photo.
 const gallery = [
-  { src: barberAtWork01, alt: 'Capster Batalion Barbershop sedang melayani pelanggan', className: 'gallery-tall' },
-  { src: haircut01, alt: 'Detail hasil haircut di Batalion Barbershop Larangan', className: '' },
-  { src: barberAtWork02, alt: 'Proses potong rambut di Batalion Barbershop', className: '' },
-  { src: haircut02, alt: 'Hasil potong rambut modern di Batalion Barbershop', className: 'gallery-tall' },
-  { src: haircut03, alt: 'Gaya rambut pelanggan Batalion Barbershop', className: '' },
-  { src: brandDetail, alt: 'Interior dan produk grooming Batalion Barbershop', className: '' },
+  { src: barberAtWork01, alt: 'Capster Batalion Barbershop sedang melayani pelanggan', className: 'gallery-tall', position: '25% 60%' },
+  { src: haircut01, alt: 'Detail hasil haircut di Batalion Barbershop Larangan', className: '', position: 'center 35%' },
+  { src: barberAtWork02, alt: 'Proses potong rambut di Batalion Barbershop', className: '', position: 'center 84%' },
+  { src: haircut02, alt: 'Hasil potong rambut modern di Batalion Barbershop', className: 'gallery-tall', position: 'center 45%' },
+  { src: haircut03, alt: 'Gaya rambut pelanggan Batalion Barbershop', className: '', position: 'center 50%' },
+  { src: brandDetail, alt: 'Interior dan produk grooming Batalion Barbershop', className: '', position: 'center 90%' },
 ];
+
+// The tiles are small, so the lightbox gets its own large rendition instead of enlarging a thumbnail.
+const galleryItems = await Promise.all(
+  gallery.map(async (item) => ({
+    ...item,
+    full: (await getImage({ src: item.src, width: 1400, format: 'webp', quality: 84 })).src,
+  }))
+);
 
 const localBusinessSchema = {
   '@context': 'https://schema.org',
@@ -241,16 +251,17 @@ const localBusinessSchema = {
           </div>
 
           <div class="gallery-grid">
-            {gallery.map((item, index) => (
-              <button class:list={['gallery-item', item.className]} type="button" data-gallery-item aria-label={`Perbesar foto galeri ${index + 1}`}>
+            {galleryItems.map((item, index) => (
+              <button class:list={['gallery-item', item.className]} type="button" data-gallery-item data-full={item.full} aria-label={`Perbesar foto galeri ${index + 1}`}>
                 <Image
                   src={item.src}
                   alt={item.alt}
-                  widths={[420, 640, 840]}
-                  sizes="(min-width: 900px) 33vw, 50vw"
+                  widths={[320, 480, 640, 800]}
+                  sizes="(min-width: 1536px) 375px, (min-width: 1024px) 310px, (min-width: 681px) 250px, 46vw"
                   format="webp"
                   quality={82}
                   loading="lazy"
+                  style={`object-position: ${item.position}`}
                 />
                 <span class="gallery-index">0{index + 1}</span>
                 <span class="gallery-open" aria-hidden="true">＋</span>
@@ -312,7 +323,7 @@ const localBusinessSchema = {
 
       <section class="final-cta">
         <div class="final-cta-bg" aria-hidden="true">
-          <Image src={haircut03} alt="" widths={[640, 1000, 1600]} sizes="100vw" format="webp" quality={80} />
+          <Image src={barberAtWork01} alt="" widths={[640, 1000, 1600, 2200]} sizes="100vw" format="webp" quality={70} />
         </div>
         <div class="final-cta-overlay"></div>
         <div class="container final-cta-content reveal">
@@ -363,6 +374,8 @@ const localBusinessSchema = {
       <span>Booking</span>
     </a>
 
+    <SiteCursor client:media="(hover: hover) and (pointer: fine)" />
+
     <dialog class="lightbox" data-lightbox>
       <button type="button" data-lightbox-close aria-label="Tutup galeri">×</button>
       <img src="" alt="Foto galeri Batalion Barbershop" data-lightbox-image />
@@ -390,9 +403,19 @@ const localBusinessSchema = {
         item.addEventListener('click', () => {
           const image = item.querySelector('img');
           if (!(lightbox instanceof HTMLDialogElement) || !(lightboxImage instanceof HTMLImageElement) || !image) return;
+          // Show the thumbnail at once, then swap in the large version when it has loaded.
+          const full = item.getAttribute('data-full');
           lightboxImage.src = image.currentSrc || image.src;
           lightboxImage.alt = image.alt;
           lightbox.showModal();
+          if (full) {
+            lightboxImage.dataset.full = full;
+            const preload = new Image();
+            preload.onload = () => {
+              if (lightbox.open && lightboxImage.dataset.full === full) lightboxImage.src = full;
+            };
+            preload.src = full;
+          }
         });
       });
       document.querySelector('[data-lightbox-close]')?.addEventListener('click', () => {
